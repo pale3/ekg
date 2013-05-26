@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ekg is small bash script wiriten to parse 
      package.use
 		 package.mask
@@ -14,9 +13,3 @@ if (r) in in action you can specify basname of file:
 there is a lot more, feel free to try and reuse code
  
  NOTE: there is highlight option line in recursivly method so if you choose another editor which is not VIM as my defualt one, you wont get highlightitn lines for specified <atom>.
-
-
-=======
-ekg
-===
->>>>>>> 60383db2e8830b59a53effb976fff060b1567b14
