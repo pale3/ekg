@@ -1,0 +1,223 @@
+#! /bin/env bash
+
+# disable globbing	
+set -f 
+
+version=0.2.1
+maintainer="@ 2013 Marko Rakamaric"
+
+msg(){ printf "%s\n" "$@"; } # color noraml
+err(){ printf "%s\n" "${R}ERROR:${N} $@";  } # color red!!
+die(){ exit "$?"; } # exit 
+
+# define colors 
+R="$(tput bold)$(tput setaf 1)"
+G="$(tput bold)$(tput setaf 2)"
+B="$(tput bold)$(tput setaf 4)"
+W="$(tput bold)$(tput setaf 7)"
+Y="$(tput bold)$(tput setaf 3)"
+y="$(tput setaf 3)"
+g="$(tput setaf 2)"
+N="$(tput sgr0)"
+# end colors	
+
+version(){
+cat << EOF
+     This is  : todo
+     Version  : $version
+ Description  : Rich and colorfull todo reminder 
+   Copyright  : $maintainer
+     License  : GNU General Public License, version 3 or later
+EOF
+}
+
+usage(){
+cat << EOF  
+Usage: ekg <action> <atom> <arg> <patern>
+ 
+${G}Standard actions:${N}	
+  ${W}(e)dit${N}             use EDITOR to edit <file> directly 
+  ${W}(s)how${N}             show lines matching <patern>
+  ${W}alte(r)${N}            alter matched <patern> in finded files recursivly 
+  ${W}(a)dd${N}              insert <atom> in <file>
+  ${W}(l)ist${N}             list <file> or without <arg> all files
+
+EOF
+}
+
+# variables
+make_file="/etc/portage/make.conf"
+world_file="/var/lib/portage/world"
+
+package_files=( 
+"/etc/portage/package.use" 
+"/etc/portage/package.accept_keywords" 
+"/etc/portage/package.mask" 
+"/etc/portage/package.unmask" )
+
+
+list_file_or_files(){
+
+	alterfile=${BASH_ARGV[0]}
+
+	if [[ $alterfile =~ ^[a-z] ]] && [[ ! $listall ]]; then
+
+		 if [[ $alterfile != "world" ]]; then
+
+			for i in ${package_files[@]}; do
+				file=${i##*/}
+				[[ $file == $alterfile ]] && usefile="$i" 
+			done	
+
+		 else
+				usefile=$world_file
+		 fi
+
+			[[ ! $usefile  ]]	&& err "No souch file" && die
+
+			file=$usefile
+			msg " ${G}*${N} List content of ${W}$file${N}" 
+			
+			lnb=1
+			while read line; do
+			
+				_parse_read_line				
+		
+				msg "  ${g}$matched${N} ${B}$seted${N}${R}$unseted${N}"
+				unset unseted seted flags matched 
+			let lnb++	
+			done < $usefile
+	
+				msg "  ${Y}*${N} Total packages in ${W}@${file##*/}${N} set: ${lnb}"
+		
+	else
+	  
+		for i in ${package_files[@]}; do
+			
+			! [[ -e $i  ]] && nofile+=("$i") && continue
+
+			file=$i
+			msg " ${G}*${N} List content of ${W}$file${N}" 
+			
+			while read line; do
+				_parse_read_line
+				
+				msg "  ${g}$matched${N} ${B}$seted${N}${R}$unseted${N}"
+				unset unseted seted flags matched 
+
+			done < $i 
+		
+		done
+
+	fi
+
+}
+
+show_match(){
+	alterline=${BASH_ARGV[0]}
+	
+	if [[ $alterline =~ ^[a-z] ]]; then
+			
+		for i in ${package_files[@]}; do
+			
+			! [[ -e $i  ]] && nofile+=("$i") && continue
+
+			file=$i
+			while read line; do
+
+				_parse_matched_line_
+
+			if [[ $found ]]; then
+				infile+="$i "
+				_parse_read_line
+							
+				msg " ${g}$matched${N} ${B}$seted${N}${R}$unseted${N}in $file"
+				unset unseted seted flags matched 
+
+			fi
+
+			done < $i 
+		
+		done
+
+			[[ $nofile ]] && msg " ${Y}*${N} These files doesn't exist:" && msg " - $nofile"
+			
+	fi
+
+}
+
+_parse_read_line(){
+
+		line=${line}
+
+	  matched=${line%% *} # show only matched without flags
+		flags=$( echo $line | awk '{for (i=2; i<=NF; i++) print $i}' )
+		
+		for i in ${flags[@]}; do
+			[[ $i = -* ]] && unseted+="$i " || seted+="$i "
+		done
+
+}
+
+_parse_matched_line_(){
+	
+	found=$( echo $line | awk '{print $1}' |  grep "$alterline" )
+
+}
+
+edit_file(){
+	
+	for i in ${package_files[@]}; do
+		file=${i##*/}
+		[[ $file == $arg ]] && valid="true" && sudo $EDITOR $i
+	done
+	
+	[[ $arg == "make.conf" ]] && valid="true" && sudo $EDITOR $make_file
+	[[ $arg == "world" ]] && valid="true" && sudo $EDITOR $world_file
+	[[ ! $valid ]] && err "no such file: $arg"
+
+}
+
+alter_file(){
+
+	show_match &> /dev/null
+	if [[ $infile ]]; then 
+		
+  	for i in $infile; do
+  		sudo $EDITOR +/$alterline -c "set cursorline" $i
+  	done
+	else
+		err "No such patern: $alterline"
+	fi
+}
+
+insert_in_file(){
+
+	alterfile=${BASH_ARGV[0]}
+	for i in ${package_files[@]}; do
+		file=${i##*/}
+		[[ $file == $alterfile ]] && sudo sh -c "echo $arg >> $i" && 
+		msg " ${G}*${N} Inserted "${g}$arg${N}" in $i"
+	done
+	
+}
+
+ARGS=("$@")
+for i in ${ARGS[@]}; do
+	[[ "$i" =~ ^[a-z] ]] && OPTS+=("$i")
+	[[ "$i" =~ ^--[a-z] ]] && OPTS+=("$i")
+	[[ "$i" =~ ^-[a-z] ]] && OPTS+=("$i")
+done
+
+[[ $# -lt 1 ]] && usage && die
+
+case $OPTS in 
+	s|show    ) show_match ;;
+	l|list	  ) [[ $# -lt 2 ]] && listall="true" 
+					    list_file_or_files ;;
+	e|edit    ) arg="${BASH_ARGV[0]}" edit_file ;;
+	r|alter   ) alter_file ;;
+	a|add     ) arg=${ARGS[@]:1:1} insert_in_file ;;
+	--help|-h ) usage ;;
+					 *) err "not recognized"
+esac
