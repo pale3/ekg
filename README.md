@@ -1,5 +1,5 @@
 ekg is small bash script wiriten to parse 
-     package.use
+		 package.use
 		 package.mask
 		 package.umask
 		 package.accept_keywords

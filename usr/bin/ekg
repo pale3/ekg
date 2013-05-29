@@ -196,8 +196,8 @@ insert_in_file(){
 	alterfile=${BASH_ARGV[0]}
 	for i in ${package_files[@]}; do
 		file=${i##*/}
-		[[ $file == $alterfile ]] && sudo sh -c "echo $arg >> $i" && 
-		msg " ${G}*${N} Inserted "${g}$arg${N}" in $i"
+		[[ $file == $alterfile ]] && sudo sh -c "echo "$arg" >> $i" && 
+		msg " ${G}*${N} Inserted "${g}"$arg"${N}" in $i"
 	done
 	
 }
