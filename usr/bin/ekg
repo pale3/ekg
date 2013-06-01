@@ -52,8 +52,11 @@ world_file="/var/lib/portage/world"
 package_files=( 
 "/etc/portage/package.use" 
 "/etc/portage/package.accept_keywords" 
+"/etc/portage/package.keywords" 
 "/etc/portage/package.mask" 
-"/etc/portage/package.unmask" )
+"/etc/portage/package.unmask" 
+"/etc/portage/package.license" 
+)
 
 
 list_file_or_files(){
@@ -120,7 +123,7 @@ show_match(){
 			
 		for i in ${package_files[@]}; do
 			
-			! [[ -e $i  ]] && nofile+=("$i") && continue
+			! [[ -e $i  ]] && nofile="true" && badfile+=("$i") && continue
 
 			file=$i
 			while read line; do
@@ -140,7 +143,12 @@ show_match(){
 		
 		done
 
-			[[ $nofile ]] && msg " ${Y}*${N} These files doesn't exist:" && msg " - $nofile"
+			if [[ $nofile ]]; then
+				msg " ${Y}*${N} These files doesn't exist:" 
+				for i in ${badfile[@]};do
+					msg " - $i"
+				done
+			fi
 			
 	fi
 
