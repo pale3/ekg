@@ -162,7 +162,11 @@ _parse_read_line(){
 
 	  matched=${line%% *} # show only matched without flags
 		flags=$( echo $line | awk '{for (i=2; i<=NF; i++) print $i}' )
+		commented=$(echo $line | grep ^#) 	
 		
+		# line which contain comment 
+		[[ $commented ]] && msg "  ${w}$line${N}" && continue
+
 		for i in ${flags[@]}; do
 			[[ $i = -* ]] && unseted+="$i " || seted+="$i "
 		done
