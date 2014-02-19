@@ -3,8 +3,8 @@
 # disable globbing	
 set -f 
 
-version=0.2.1
-maintainer="@ 2013 Marko Rakamaric"
+version=0.2.2
+maintainer="@ 2013-2014 Marko Rakamaric"
 
 msg(){ printf "%s\n" "$@"; } # color noraml
 err(){ printf "%s\n" "${R}ERROR:${N} $@";  } # color red!!
@@ -44,6 +44,8 @@ ${G}Standard actions:${N}
 
 EOF
 }
+
+is_root(){ [[ $EUID != 0 ]] && echo 0;}
 
 # variables
 make_file="/etc/portage/make.conf"
@@ -175,13 +177,15 @@ _parse_matched_line_(){
 
 edit_file(){
 	
+	[[ $(is_root) -eq 0 ]] && msg "  ${R}*${N} Root privilages required" && exit 254
+	
 	for i in ${package_files[@]}; do
 		file=${i##*/}
-		[[ $file == $arg ]] && valid="true" && sudo $EDITOR $i
+		[[ $file == $arg ]] && valid="true" && $EDITOR $i
 	done
 	
-	[[ $arg == "make.conf" ]] && valid="true" && sudo $EDITOR $make_file
-	[[ $arg == "world" ]] && valid="true" && sudo $EDITOR $world_file
+	[[ $arg == "make.conf" ]] && valid="true" && $EDITOR $make_file
+	[[ $arg == "world" ]] && valid="true" && $EDITOR $world_file
 	[[ ! $valid ]] && err "no such file: $arg"
 
 }
@@ -192,7 +196,7 @@ alter_file(){
 	if [[ $infile ]]; then 
 		
   	for i in $infile; do
-  		sudo $EDITOR +/$alterline -c "set cursorline" $i
+  		$EDITOR +/$alterline -c "set cursorline" $i
   	done
 	else
 		err "No such patern: $alterline"
@@ -200,11 +204,13 @@ alter_file(){
 }
 
 insert_in_file(){
+	
+	[[ $(is_root) -eq 0 ]] && msg "  ${R}*${N} Root privilages required" && exit 254
 
 	alterfile=${BASH_ARGV[0]}
 	for i in ${package_files[@]}; do
 		file=${i##*/}
-		[[ $file == $alterfile ]] && sudo sh -c "echo $arg >> $i" && 
+		[[ $file == $alterfile ]] && echo "$arg" >> $i && 
 		msg " ${G}*${N} Inserted "${g}"$arg"${N}" in $i"
 	done
 	
