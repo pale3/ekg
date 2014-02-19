@@ -45,7 +45,7 @@ ${G}Standard actions:${N}
 EOF
 }
 
-is_root(){ [[ $EUID != 0 ]] && echo 0;}
+is_root(){ [[ $EUID != 0 ]] && echo 0 || echo 1;}
 
 # variables
 make_file="/etc/portage/make.conf"
@@ -208,7 +208,8 @@ alter_file(){
 }
 
 insert_in_file(){
-	
+	# function 0 not root 1 is root
+
 	[[ $(is_root) -eq 0 ]] && msg "  ${R}*${N} Root privilages required" && exit 254
 
 	alterfile=${BASH_ARGV[0]}
