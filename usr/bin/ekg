@@ -188,7 +188,7 @@ edit_file(){
 	
 	for i in ${package_files[@]}; do
 		file=${i##*/}
-		[[ $file == $arg ]] && valid="true" && echo "$EDITOR" $i
+		[[ $file == $arg ]] && valid="true" && $EDITOR $i
 	done
 	
 	[[ $arg == "make.conf" ]] && valid="true" && $EDITOR $make_file
