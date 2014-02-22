@@ -184,8 +184,6 @@ _parse_matched_line_(){
 
 edit_file(){
 	
-	[[ $(is_root) -eq 0 ]] && msg "  ${R}*${N} Root privilages required" && exit 254
-	
 	for i in ${package_files[@]}; do
 		file=${i##*/}
 		[[ $file == $arg ]] && valid="true" && $EDITOR $i
