@@ -7,7 +7,7 @@ version=0.2.2
 maintainer="@ 2013-2014 Marko Rakamaric"
 
 msg(){ printf "%s\n" "$@"; } # color noraml
-err(){ printf "%s\n" "${R}ERROR:${N} $@";  } # color red!!
+err(){ printf "%s\n" "${R}!!! Error:${N} $@";  } # color red!!
 die(){ exit "$?"; } # exit 
 
 # define colors 
@@ -187,7 +187,15 @@ edit_file(){
 	
 	for i in ${package_files[@]}; do
 		file=${i##*/}
-		[[ $file == $arg ]] && valid="true" && $EDITOR $i
+		if [[ $file == $arg ]]; then 
+			valid="true" 
+			if [[ -f $i ]]; then
+				 $EDITOR $i
+			else
+				msg " ${Y}::${N} ${W}$i${N} doesn't exist, create it first."
+			fi
+		fi	
+
 	done
 	
 	[[ $arg == "make.conf" ]] && valid="true" && $EDITOR $make_file
